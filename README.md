@@ -28,6 +28,14 @@ TypeMarkup is a beautiful and simple language for web documents.
     html - id 'root' head
     ```
 
+- Scope with brackets
+
++ ```scss
+    html - id 'root' head {
+        meta
+    }
+    ```
+
 ### **Break - Sometimes not working**
 
 - Multiple tags in a single line
