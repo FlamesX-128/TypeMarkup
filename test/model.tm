@@ -32,6 +32,6 @@
 	meta
 }
 
-& html body > div {
+& html * html body  div {
 	'force insert'
 }

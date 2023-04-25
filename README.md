@@ -10,6 +10,38 @@ TypeMarkup is a beautiful and simple language for web documents.
 
 ![image](https://user-images.githubusercontent.com/78381898/190880949-b7093267-2751-42d1-9291-cfd3654df293.png)
 
+## **Development**
+
+### **Not implemented**
+
+- Macros
+
++ @import
+
++ @[custom]
+
+### **Not working**
+
+- Attribute in a single line
+
++ ```scss
+    html - id 'root' head
+    ```
+
+### **Break - Sometimes not working**
+
+- Multiple tags in a single line
+
++ ```scss
+    & html body div
+    ```
+
+- String in a single line
+
++ ```scss
+    div 'i'm not working'
+    ```
+
 ## **Contributing**
 
 Pull requests are welcome. For major changes, please open an issue first to
