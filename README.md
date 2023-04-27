@@ -14,41 +14,26 @@ TypeMarkup is a beautiful and simple language for web documents.
 
 ### **Not implemented**
 
+- Brackets scope
+
 - Macros
 
-+ @import
+    + @import
 
-+ @[custom]
+    + @[custom]
 
-### **Not working**
+### **broken functionality**
 
-- Attribute in a single line
+- Only top level references working
 
-+ ```scss
-    html - id 'root' head
-    ```
+    + ```scss
+        // Pure TypeMarkup
+        * html - lang 'en' html
 
-- Scope with brackets
-
-+ ```scss
-    html - id 'root' head {
-        meta
-    }
-    ```
-
-### **Break - Sometimes not working**
-
-- Multiple tags in a single line
-
-+ ```scss
-    & html body div
-    ```
-
-- String in a single line
-
-+ ```scss
-    div 'i'm not working'
-    ```
+        & html head
+            - charset 'utf-8'
+            meta
+        ```
 
 ## **Contributing**
 

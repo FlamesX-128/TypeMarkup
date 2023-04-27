@@ -1,6 +1,8 @@
 {
   "version": "2",
   "remote": {
+    "https://cdn.skypack.dev/-/lodash.clonedeep@v4.5.0-3XArza6cU4IXcLrDvq0N/dist=es2019,mode=imports/optimized/lodash.clonedeep.js": "88488efb831cebd2de926dbb94d231b671a0e0864c1e0787800515c5c2763313",
+    "https://cdn.skypack.dev/lodash.clonedeep": "eb0ce5f804a873846da7a0436b0ae192aef66fe5d0b9a84b19117b99beeca6dd",
     "https://deno.land/std@0.184.0/_util/asserts.ts": "178dfc49a464aee693a7e285567b3d0b555dc805ff490505a8aae34f9cfb1462",
     "https://deno.land/std@0.184.0/_util/os.ts": "d932f56d41e4f6a6093d56044e29ce637f8dcc43c5a90af43504a889cf1775e3",
     "https://deno.land/std@0.184.0/fs/_util.ts": "579038bebc3bd35c43a6a7766f7d91fbacdf44bc03468e9d3134297bb99ed4f9",

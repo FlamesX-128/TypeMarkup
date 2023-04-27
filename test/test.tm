@@ -1,4 +1,4 @@
-* html html
+* html - lang 'en' html
 
 & html head
 	- charset 'utf-8'
@@ -12,5 +12,5 @@
 	- name 'viewport'
 	meta
 
-& html body div
+& html body
 	'force insert'

@@ -1,77 +1,65 @@
-import type { Scope, Handler } from '../@types/lexer.ts'
-import { Token } from '../@types/lexer.ts'
+import { LexerScope, Token, TokenElement } from 'TypeMarkup'
 
-//
-import comment from './lexer/00-comment.ts'
-import unknown from './lexer/01-unknown.ts'
+// Analyzers
+import { commentAnalyzer } from './lexer-analyzers/00-comment.ts'
 
-import pointer from './lexer/02-pointer.ts'
-import reference from './lexer/03-reference.ts'
+import { identifierAnalyzer } from './lexer-analyzers/01-identifier.ts'
+import { attributeAnalyzer } from './lexer-analyzers/02-attribute.ts'
 
-import attribute from './lexer/04-attribute.ts'
-import macro from './lexer/05-macro.ts'
+import { stringAnalyzer } from './lexer-analyzers/03-string.ts'
 
-import identifier from './lexer/06-identifier.ts'
-import string from './lexer/07-string.ts'
+import { referenceDefAnalyzer } from './lexer-analyzers/04-referenceDef.ts'
+import { referenceAnalyzer } from './lexer-analyzers/05-reference.ts'
 
-import endLine from './lexer/08-endline.ts'
-import tab from './lexer/09-tab.ts'
+import { spaceAnalyzer } from './lexer-analyzers/06-space.ts'
+import { tabAnalyzer } from './lexer-analyzers/07-tab.ts'
+import { endOfLineAnalyzer } from './lexer-analyzers/08-eol.ts'
 
-const solvers: Handler[] = [
-    pointer,
-    reference,
+import { macroAnalyzer } from './lexer-analyzers/09-macro.ts'
+import { unknownAnalyzer } from './lexer-analyzers/10-unknown.ts'
 
-    attribute,
-    macro,
+const analyzers: ((this: LexerScope) => TokenElement | null)[] = [
+    commentAnalyzer,
 
-    identifier,
-    string,
+    identifierAnalyzer,
+    attributeAnalyzer,
 
-    endLine,
-    tab,
+    stringAnalyzer,
 
-    comment,
-    unknown
+    referenceDefAnalyzer,
+    referenceAnalyzer,
+
+    spaceAnalyzer,
+    tabAnalyzer,
+    endOfLineAnalyzer,
+
+    macroAnalyzer,
+    unknownAnalyzer
 ]
 
-function reader(this: Scope): Token[] {
-    const contentLength = this.content.length
-    const data: Token[] = []
+function analyzer(this: LexerScope): TokenElement[] {
+    while (this.inRange()) {
+        const token = analyzers
+            .map(
+                (analyzer) => analyzer.call(this)
+            )
+            .filter(
+                (token) => token !== null
+            )[0]
 
-    while (this.cursor < contentLength) {
-        this.currChar = this.content[this.cursor]
-
-        for (const handler of Object.values(solvers)) {
-            const token = handler.call(this)
-
-            if (token !== null) {
-                data.push(token)
-
-                break
-            }
+        if (token !== null) {
+            if (token.type !== Token.Space)
+                this.values.push(token)
         }
 
-        this.cursor++
+        this.next()
     }
 
-    return data
+    return this.values
 }
 
-const lexer = (content: string): Token[] => {
-    const context: Partial<Scope> = {
-        content: content,
-        cursor: 0,
-        updateCursor(this: Scope) {
-            const prevChar = this.currChar
-
-            this.cursor++
-            this.currChar = this.content[this.cursor]
-
-            return prevChar
-        }
-    }
-
-    return reader.call(context as Scope)
+const lexer = (content: string): TokenElement[] => {
+    return analyzer.call(new LexerScope([...content]))
 }
 
-export { lexer, solvers }
+export { lexer }
