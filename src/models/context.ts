@@ -1,5 +1,3 @@
-import cloneDeep from "https://cdn.skypack.dev/lodash.clonedeep";
-
 import { NodeElement, TokenElement } from "TypeMarkup";
 
 class Scope<T> {
