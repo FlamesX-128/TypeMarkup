@@ -35,6 +35,10 @@ TypeMarkup is a beautiful and simple language for web documents.
             meta
         ```
 
+### **Parser linter protoype**
+
+![TypeMarkup-Linter](https://user-images.githubusercontent.com/78381898/235047701-1f1c5a4e-6c15-44b2-b6db-f4659de26f50.png)
+
 ## **Contributing**
 
 Pull requests are welcome. For major changes, please open an issue first to

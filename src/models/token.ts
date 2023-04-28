@@ -1,20 +1,20 @@
 enum Token {
-    Comment,
+    Comment = 'Comment',
 
-    Identifier,
-    Attribute,
+    Identifier = 'Identifier',
+    Attribute = 'Attribute',
 
-    String,
+    String = 'String',
 
-    ReferenceDef,
-    Reference,
+    ReferenceDef = 'ReferenceDef',
+    Reference = 'Reference',
 
-    Space,
-    Tab,
-    EOL,
+    Space = 'Space',
+    Tab = 'Tab',
+    EOL = 'EOL',
 
-    Macro,
-    Unknown
+    Macro = 'Macro',
+    Unknown = 'Unknown',
 }
 
 class TokenElement<T extends Token = Token> {

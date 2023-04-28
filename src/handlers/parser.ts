@@ -15,7 +15,7 @@ import { endOfLineAnalyzer } from './parser-analyzers/08-eol.ts'
 //import { macroAnalyzer } from './parser-analyzers/09-macro.ts'
 import { unknownAnalyzer } from './parser-analyzers/10-unknown.ts'
 
-const analyzers: Record<number, (this: ParserScope) => void> = {
+const analyzers: Record<string, (this: ParserScope) => void> = {
     [Token.Identifier]: identifierAnalyzer,
     [Token.Attribute]: attributeAnalyzer,
 
@@ -41,8 +41,11 @@ function analyzer(this: ParserScope): NodeElement[] {
     return this.values
 }
 
-const parser = (tokens: TokenElement[]): NodeElement[] => {
-    return analyzer.call(new ParserScope(tokens))
+const parser = (tokens: TokenElement[], file: string): NodeElement[] => {
+    const scope = new ParserScope(tokens, file)
+    scope.analyzers = analyzers
+
+    return analyzer.call(scope)
 }
 
 export { parser }

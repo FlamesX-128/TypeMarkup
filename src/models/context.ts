@@ -1,4 +1,6 @@
-import { NodeElement, TokenElement } from "TypeMarkup";
+import { Node, NodeElement, Token, TokenElement } from "TypeMarkup";
+
+import * as color from "https://deno.land/std@0.185.0/fmt/colors.ts";
 
 class Scope<T> {
     public readonly contentSize: number
@@ -35,9 +37,27 @@ class Scope<T> {
 
 }
 
+const singletonTags = [
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr'
+];
+
 class ParserScope extends Scope<TokenElement> {
-    public readonly analyzers: Record<string, (this: ParserScope) => void> = {}
+    public analyzers: Record<string, (this: ParserScope) => void> = {}
     public readonly values: NodeElement[] = []
+    public readonly file: string
 
     public attributes: Record<string, string | null> | null = null
     public indent = 0
@@ -46,9 +66,10 @@ class ParserScope extends Scope<TokenElement> {
     public referenceDef: string | null = null
 
     constructor(
-        content: TokenElement[] = []
+        content: TokenElement[] = [], file: string
     ) {
         super(content)
+        this.file = file
     }
 
     getLastNodeById(nodes: NodeElement[], referenceName: string | null): NodeElement | null {
@@ -60,7 +81,7 @@ class ParserScope extends Scope<TokenElement> {
 
             if (node.childNode !== null)
                 return this.getLastNodeById([node.childNode], referenceName)
-            
+
         }
 
         return null
@@ -72,27 +93,20 @@ class ParserScope extends Scope<TokenElement> {
     ): NodeElement {
         const node: NodeElement | undefined = nodes[nodes.length - 1]
 
-        console.log(referenceName, indent, node, value)
-    
         if (node !== undefined && node.childNode !== null && node.indent <= indent)
             return this.assignLastNodeByLevel([node.childNode], indent, value, referenceName)
-
-        /*if (referenceName !== null) for (const child of nodes) {
-            if (child.id !== referenceName) continue
-            
-            if (child.childNodes === null) child.childNodes = []
-
-            return this.assignLastNodeByLevel(
-                child.childNodes, indent, value, referenceName
-            )
-        }*/
 
         if (referenceName !== null) {
             const node = this.getLastNodeById(nodes, referenceName)
 
-            console.log("ref: ", node)
+            if (node === null) {
+                this.invalidElement(
+                    'error', `The reference ${referenceName} was not found at the current tabulation level in the code.`,
+                    this.currElement!.pos
+                )
 
-            if (node === null) throw new Error('Reference not found')
+                return value
+            }
 
             if (node.childNodes === null) node.childNodes = []
 
@@ -101,21 +115,41 @@ class ParserScope extends Scope<TokenElement> {
             )
         }
 
-        if (node === undefined && indent !== 0)
-            throw new Error('Unexpected level')
-    
+        if (
+            node !== undefined && singletonTags.includes(node.data) &&
+            (node.childNodes !== null || node.childNode !== null)
+        ) {
+            this.invalidElement(
+                'warning', `The tag "${node.data}" cannot have children as it is a singleton tag.`,
+                this.currElement!.pos
+            )
+        }
+
+        if (node === undefined && indent !== 0) {
+            this.invalidElement(
+                'error', 'An incorrect level of tabulation has been detected in the code.',
+                this.currElement!.pos
+            )
+
+            return value
+        }
+
         if (indent === 0) {
             nodes.push(value)
             return value
         }
-    
+
         if (node.childNodes === null) node.childNodes = []
-    
+
         return this.assignLastNodeByLevel(node.childNodes, indent - 1, value, referenceName)
     }
 
     assignNodeAttributes(node: NodeElement) {
-        node.attributes = this.attributes!
+        if (
+            node.nodeType === Node.Text && this.attributes !== null
+        ) this.invalidAttributeOnTextNode(node)
+
+        node.attributes = { ...this.attributes || {} }
         this.attributes = null
     }
 
@@ -123,6 +157,38 @@ class ParserScope extends Scope<TokenElement> {
         node.id = this.referenceDef
         this.referenceDef = null
     }
+
+    // - - -
+    invalidElement(type: 'error' | 'warning', message: string, pos: NodeElement['pos']) {
+        let EOL_1 = pos.start - 1
+        let EOL_2 = -1
+
+        for (let i = pos.start; i >= 0; i--) {
+            if (this.file[i] !== '\n') continue
+
+            EOL_1 = i
+            break
+        }
+
+        for (let i = pos.end!; i <= this.file.length; i++) {
+            if (this.file[i] !== '\n') continue
+
+            EOL_2 = i
+            break
+        }
+
+        const colorType = type === 'error' ? color.red : color.yellow
+
+        console.log(
+            colorType(type) + `: ${message}\n`
+            + `  ${pos.start} -> ` + color.underline(`${this.file.slice(EOL_1 + 1, EOL_2).replaceAll('\t', '')}\n`)
+        )
+    }
+
+    invalidAttributeOnTextNode(node: NodeElement) {
+        this.invalidElement('warning', 'Unexpected attribute on text node.', node.pos)
+    }
+
 }
 
 class LexerScope extends Scope<string> {

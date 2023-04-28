@@ -2,7 +2,7 @@
 
 & html head
 	- charset 'utf-8'
-	meta
+	meta div
 
 	- http-equiv 'X-UA-Compatible'
 	- content 'IE=edge'
@@ -13,4 +13,11 @@
 	meta
 
 & html body
-	'force insert'
+	- class 'container' 'container'
+
+	* & - head
+	
+			div
+	4
+
+& m p

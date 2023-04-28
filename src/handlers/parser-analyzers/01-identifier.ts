@@ -1,13 +1,12 @@
 import { Node, NodeElement, ParserScope, Tag, Token } from 'TypeMarkup'
 
 function identifierAnalyzer(this: ParserScope) {
-    let node: NodeElement<Node> = new NodeElement(Node.Element, this.currElement!.data as Tag)
-
+    let node: NodeElement<Node> = new NodeElement(
+        Node.Element, this.currElement!.data as Tag, this.currElement!.pos
+    )
 
     node.indent = this.indent
-
-    node.attributes = { ...this.attributes || {} }
-    this.attributes = null
+    this.assignNodeAttributes(node)
 
     this.assignLastNodeByLevel(this.values, this.indent, node, this.referenceName)
 
@@ -19,12 +18,13 @@ function identifierAnalyzer(this: ParserScope) {
         }
 
         if (this.currElement?.type === Token.Identifier) {
-            const currNode = new NodeElement(Node.Element, this.currElement!.data as Tag)
+            const currNode = new NodeElement(
+                Node.Element, this.currElement!.data as Tag, this.currElement!.pos
+            )
 
             node.indent = this.indent
 
-            node.attributes = { ...this.attributes || {} }
-            this.attributes = null
+            this.assignNodeAttributes(currNode)
 
             node.childNode = currNode
             node = currNode
@@ -33,9 +33,12 @@ function identifierAnalyzer(this: ParserScope) {
         }
 
         if (this.currElement?.type === Token.String) {
-            const currNode = new NodeElement(Node.Text, this.currElement!.data as string)
+            const currNode = new NodeElement(
+                Node.Text, this.currElement!.data as string, this.currElement!.pos
+            )
 
             node.indent = this.indent
+            this.assignNodeAttributes(currNode)
 
             node.childNode = currNode
             node = currNode
@@ -48,8 +51,6 @@ function identifierAnalyzer(this: ParserScope) {
 
         throw new Error('Unexpected token')
     }
-
-    console.log(this.referenceName)
 
     node.id = this.referenceDef
 
