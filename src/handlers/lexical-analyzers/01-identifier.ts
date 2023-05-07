@@ -3,7 +3,7 @@ import { LexerScope, Token, TokenElement } from 'TypeMarkup'
 function identifierAnalyzer(this: LexerScope) {
     if (this.currElement!.match(/[A-z]/) === null) return null
 
-    const start = this.cursor
+    const colStart = this.col
     let value = ''
 
     do {
@@ -19,8 +19,10 @@ function identifierAnalyzer(this: LexerScope) {
         Token.Identifier,
         value,
         {
-            start: start,
-            end: this.cursor
+            rowStart: this.row,
+            colStart: colStart,
+            colEnd: this.col + 1,
+            rowEnd: this.row + 1
         }
     )
 }

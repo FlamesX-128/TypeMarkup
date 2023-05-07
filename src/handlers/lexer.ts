@@ -48,18 +48,17 @@ function analyzer(this: LexerScope): TokenElement[] {
             )[0]
 
         if (token !== null) {
-            if (token.type !== Token.Space)
-                this.values.push(token)
+            if (token.type !== Token.Space) this.result.push(token)
         }
 
         this.next()
     }
 
-    return this.values
+    return this.result
 }
 
 const lexer = (content: string): TokenElement[] => {
-    return analyzer.call(new LexerScope([...content]))
+    return analyzer.call(new LexerScope(content))
 }
 
 export { lexer }

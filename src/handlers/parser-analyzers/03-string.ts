@@ -5,11 +5,10 @@ function stringAnalyzer(this: ParserScope) {
         Node.Text, this.currElement!.data as string, this.currElement!.pos
     )
 
-    this.assignNodeAttributes(node)
+    this.assignElementAttributes(node)
+    node.indent = this.indent + 0
 
-    this.assignLastNodeByLevel(
-        this.values, this.indent, node, this.referenceName
-    )
+    this.assignLastElement(this.result, node)
 }
 
 export { stringAnalyzer }

@@ -1,22 +1,76 @@
-import { Node, NodeElement, Token, TokenElement } from "TypeMarkup";
+import { Message, Node, NodeElement, Position, Token, TokenElement } from 'TypeMarkup'
 
-import * as color from "https://deno.land/std@0.185.0/fmt/colors.ts";
+class LexerScope {
+    public readonly content: string
 
-class Scope<T> {
-    public readonly contentSize: number
-    public readonly content: T[]
-
-    public currElement?: T
+    public currElement: string | undefined
     public cursor = 0
 
+    public result: TokenElement[] = []
+
+    public rows: number[] = []
+    public row = 0
+    public col = 0
+
     constructor(
-        content: T[] = []
+        content: string = ''
     ) {
+        this.currElement = content.at(0)
+        this.content = content;
 
-        this.contentSize = content.length
+        [...content.matchAll(/\n/g)].forEach(
+            (row) => this.rows.push(row.index!)
+        )
+    }
+
+    public inRange(): boolean {
+        return this.cursor < this.content.length
+    }
+
+    private updatePosition(reverse: boolean): boolean {
+        this.currElement = this.content[this.cursor += reverse ? -1 : 1]
+        this.col += reverse ? -1 : 1
+
+        const row = this.row + 0
+
+        this.row = this.rows.reduce(
+            (acc, row) => row < this.cursor ? acc + 1 : acc, 0
+        )
+
+        if (row !== this.row) this.col = 0
+
+        return this.inRange()
+    }
+
+    public next(): boolean {
+        return this.updatePosition(false)
+    }
+
+    public prev(): boolean {
+        return this.updatePosition(true)
+    }
+}
+
+class ParserScope {
+    public readonly analyzers: Record<Token, (this: ParserScope) => void>
+    public readonly content: TokenElement[]
+
+    public currElement: TokenElement | undefined
+    public cursor = 0
+
+    public messages: Message[] = []
+    public result: NodeElement[] = []
+
+    public attributes: Record<string, string | null> | null = null
+    public indent = 0
+
+    public referenceCalls: Record<number, { name: string, first: boolean }> = {}
+    public referenceDef: string | null = null
+
+    constructor(analyzers: ParserScope['analyzers'], content: TokenElement[] = []) {
+        this.analyzers = analyzers
+        this.currElement = content.at(0)
         this.content = content
-
-        this.currElement = content[0]
     }
 
     public inRange(): boolean {
@@ -35,170 +89,59 @@ class Scope<T> {
         return this.inRange()
     }
 
-}
-
-const singletonTags = [
-    'area',
-    'base',
-    'br',
-    'col',
-    'embed',
-    'hr',
-    'img',
-    'input',
-    'link',
-    'meta',
-    'param',
-    'source',
-    'track',
-    'wbr'
-];
-
-class ParserScope extends Scope<TokenElement> {
-    public analyzers: Record<string, (this: ParserScope) => void> = {}
-    public readonly values: NodeElement[] = []
-    public readonly file: string
-
-    public attributes: Record<string, string | null> | null = null
-    public indent = 0
-
-    public referenceName: string | null = null
-    public referenceDef: string | null = null
-
-    constructor(
-        content: TokenElement[] = [], file: string
-    ) {
-        super(content)
-        this.file = file
+    // - - -
+    public invalidAttributesOnText(position: Position) {
+        this.messages.push({
+            type: 'warning', message: 'An unexpected attributes on text node.', position
+        })
     }
 
-    getLastNodeById(nodes: NodeElement[], referenceName: string | null): NodeElement | null {
-        for (const node of nodes) {
-            if (node.id === referenceName) return node
-
-            if (node.childNodes !== null)
-                return this.getLastNodeById(node.childNodes, referenceName)
-
-            if (node.childNode !== null)
-                return this.getLastNodeById([node.childNode], referenceName)
-
-        }
-
-        return null
+    public invalidIndentation(position: Position) {
+        this.messages.push({
+            type: 'error', message: 'An incorrect level of tabulation has been found.', position
+        })
     }
 
-    assignLastNodeByLevel(
-        nodes: NodeElement[], indent: number, value: NodeElement,
-        referenceName: string | null
-    ): NodeElement {
-        const node: NodeElement | undefined = nodes[nodes.length - 1]
-
-        if (node !== undefined && node.childNode !== null && node.indent <= indent)
-            return this.assignLastNodeByLevel([node.childNode], indent, value, referenceName)
-
-        if (referenceName !== null) {
-            const node = this.getLastNodeById(nodes, referenceName)
-
-            if (node === null) {
-                this.invalidElement(
-                    'error', `The reference ${referenceName} was not found at the current tabulation level in the code.`,
-                    this.currElement!.pos
-                )
-
-                return value
-            }
-
-            if (node.childNodes === null) node.childNodes = []
-
-            return this.assignLastNodeByLevel(
-                node.childNodes, indent, value, null
-            )
-        }
-
-        if (
-            node !== undefined && singletonTags.includes(node.data) &&
-            (node.childNodes !== null || node.childNode !== null)
-        ) {
-            this.invalidElement(
-                'warning', `The tag "${node.data}" cannot have children as it is a singleton tag.`,
-                this.currElement!.pos
-            )
-        }
-
-        if (node === undefined && indent !== 0) {
-            this.invalidElement(
-                'error', 'An incorrect level of tabulation has been detected in the code.',
-                this.currElement!.pos
-            )
-
-            return value
-        }
-
-        if (indent === 0) {
-            nodes.push(value)
-            return value
-        }
-
-        if (node.childNodes === null) node.childNodes = []
-
-        return this.assignLastNodeByLevel(node.childNodes, indent - 1, value, referenceName)
+    public unexpectedToken(token: keyof typeof Token, position: Position) {
+        this.messages.push({
+            type: 'error', message: `An unexpected token "${token}" has been found.`, position
+        })
     }
 
-    assignNodeAttributes(node: NodeElement) {
-        if (
-            node.nodeType === Node.Text && this.attributes !== null
-        ) this.invalidAttributeOnTextNode(node)
+    // - - - 
+    public assignLastElement(nodes: NodeElement[], node: NodeElement, indent: number = this.indent): void {
+        if (indent === 0) { nodes.push(node); return void 1 }
 
-        node.attributes = { ...this.attributes || {} }
+        const entry = nodes.at(-1)
+
+        if (entry === undefined) {            
+            return this.invalidIndentation(node.position)
+        }
+
+        if (entry.childNode !== null) {
+            return this.assignLastElement([entry.childNode], node, indent)
+        }
+
+        if (entry.childNodes === null) {
+            entry.childNodes = []
+        }
+
+        return this.assignLastElement(entry.childNodes, node, indent - 1)
+    }
+
+    public assignElementAttributes(node: NodeElement): void {
+        if (node.nodeType === Node.Text && this.attributes !== null)
+            this.invalidAttributesOnText(node.position)
+
+        node.attributes = this.attributes ? { ...this.attributes } : null
         this.attributes = null
     }
 
-    assignNodeId(node: NodeElement) {
-        node.id = this.referenceDef
-        this.referenceDef = null
-    }
-
     // - - -
-    invalidElement(type: 'error' | 'warning', message: string, pos: NodeElement['pos']) {
-        let EOL_1 = pos.start - 1
-        let EOL_2 = -1
-
-        for (let i = pos.start; i >= 0; i--) {
-            if (this.file[i] !== '\n') continue
-
-            EOL_1 = i
-            break
-        }
-
-        for (let i = pos.end!; i <= this.file.length; i++) {
-            if (this.file[i] !== '\n') continue
-
-            EOL_2 = i
-            break
-        }
-
-        const colorType = type === 'error' ? color.red : color.yellow
-
-        console.log(
-            colorType(type) + `: ${message}\n`
-            + `  ${pos.start} -> ` + color.underline(`${this.file.slice(EOL_1 + 1, EOL_2).replaceAll('\t', '')}\n`)
-        )
-    }
-
-    invalidAttributeOnTextNode(node: NodeElement) {
-        this.invalidElement('warning', 'Unexpected attribute on text node.', node.pos)
+    public assignReferenceCall(name: string): void {
+        this.referenceCalls[this.indent + 0] = { name, first: true }
     }
 
 }
 
-class LexerScope extends Scope<string> {
-    public readonly values: TokenElement[] = []
-
-    constructor(
-        content: string[] = []
-    ) {
-        super(content)
-    }
-}
-
-export { LexerScope, ParserScope, Scope }
+export { LexerScope, ParserScope }

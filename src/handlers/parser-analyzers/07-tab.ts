@@ -25,10 +25,10 @@ function tabAnalyzer(this: ParserScope) {
 
     this.prev()
 
-    this.invalidElement(
+    /*this.invalidElement(
         'warning', `Unnecessary tabulations have been detected in the code.`,
         this.currElement!.pos
-    )
+    )*/
 }
 
 export { tabAnalyzer }

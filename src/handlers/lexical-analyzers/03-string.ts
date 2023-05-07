@@ -3,7 +3,7 @@ import { LexerScope, Token, TokenElement } from 'TypeMarkup'
 function stringAnalyzer(this: LexerScope) {
     if (this.currElement !== '\'') return null
 
-    const cursorStart = this.cursor
+    const colStart = this.col
 
     let escape = false
     let value = ''
@@ -34,8 +34,10 @@ function stringAnalyzer(this: LexerScope) {
         Token.String,
         value,
         {
-            start: cursorStart,
-            end: this.cursor
+            rowStart: this.row,
+            colStart: colStart,
+            colEnd: this.col + 1,
+            rowEnd: this.row + 1
         }
     )
 }

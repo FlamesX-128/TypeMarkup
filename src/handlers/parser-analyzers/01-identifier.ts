@@ -5,10 +5,10 @@ function identifierAnalyzer(this: ParserScope) {
         Node.Element, this.currElement!.data as Tag, this.currElement!.pos
     )
 
-    node.indent = this.indent
-    this.assignNodeAttributes(node)
+    this.assignElementAttributes(node)
+    node.indent = this.indent + 0
 
-    this.assignLastNodeByLevel(this.values, this.indent, node, this.referenceName)
+    this.assignLastElement(this.result, node)
 
     while (this.next()) {
         if (this.currElement?.type === Token.Attribute) {
@@ -22,9 +22,8 @@ function identifierAnalyzer(this: ParserScope) {
                 Node.Element, this.currElement!.data as Tag, this.currElement!.pos
             )
 
-            node.indent = this.indent
-
-            this.assignNodeAttributes(currNode)
+            this.assignElementAttributes(currNode)
+            node.indent = this.indent + 0
 
             node.childNode = currNode
             node = currNode
@@ -37,8 +36,8 @@ function identifierAnalyzer(this: ParserScope) {
                 Node.Text, this.currElement!.data as string, this.currElement!.pos
             )
 
-            node.indent = this.indent
-            this.assignNodeAttributes(currNode)
+            this.assignElementAttributes(currNode)
+            node.indent = this.indent + 0
 
             node.childNode = currNode
             node = currNode
@@ -46,16 +45,34 @@ function identifierAnalyzer(this: ParserScope) {
             continue
         }
 
-        if (this.currElement?.type === Token.EOL)
-            break
+        break
+    }
 
-        throw new Error('Unexpected token')
+    while (this.inRange()) {
+        if (this.currElement!.type === Token.EOL) break
+
+        this.unexpectedToken(this.currElement!.toString(), this.currElement!.pos)
+        this.next()
     }
 
     node.id = this.referenceDef
 
-    //this.referenceName = null
     this.referenceDef = null
+
+    for (const [indent, entry] of Object.entries(this.referenceCalls)) {
+        if (entry.first === true) {
+            entry.first = false
+            continue
+        }
+
+        if (this.indent > +indent) continue
+
+        this.referenceCalls = {
+            ...Object.fromEntries(
+                Object.entries(this.referenceCalls).filter(([i, _]) => this.indent <= +i)
+            ),
+        }
+    }
 
     this.prev()
 }

@@ -15,8 +15,10 @@ function unknownAnalyzer(this: LexerScope) {
         Token.Unknown,
         this.currElement!,
         {
-            start: this.cursor + 1,
-            end: this.cursor
+            rowStart: this.row,
+            colStart: this.col,
+            colEnd: this.col + 1,
+            rowEnd: this.row + 1
         }
     )
 }

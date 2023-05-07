@@ -1,20 +1,22 @@
+import { Position } from "../../index.d.ts"
+
 enum Token {
-    Comment = 'Comment',
+    Comment,
 
-    Identifier = 'Identifier',
-    Attribute = 'Attribute',
+    Identifier,
+    Attribute,
 
-    String = 'String',
+    String,
 
-    ReferenceDef = 'ReferenceDef',
-    Reference = 'Reference',
+    ReferenceDef,
+    Reference,
 
-    Space = 'Space',
-    Tab = 'Tab',
-    EOL = 'EOL',
+    Space,
+    Tab,
+    EOL,
 
-    Macro = 'Macro',
-    Unknown = 'Unknown',
+    Macro,
+    Unknown
 }
 
 class TokenElement<T extends Token = Token> {
@@ -25,16 +27,18 @@ class TokenElement<T extends Token = Token> {
         : T extends Token.Unknown ? string
         : null
 
-    public readonly pos: {
-        start: number,
-        end?: number
-    }
+    public readonly pos: Position
 
-    constructor(type: T, data: TokenElement<T>['data'], pos: TokenElement['pos']) {
+    constructor(type: T, data: TokenElement<T>['data'], pos: Position) {
         this.type = type
         this.data = data
         this.pos = pos
     }
+
+    public toString(token?: Token): keyof typeof Token {
+        return Token[token || this.type] as keyof typeof Token
+    }
+
 }
 
 export { Token, TokenElement }

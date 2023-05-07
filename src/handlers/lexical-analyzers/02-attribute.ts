@@ -7,8 +7,10 @@ function attributeAnalyzer(this: LexerScope) {
         Token.Attribute,
         null,
         {
-            start: this.cursor,
-            end: this.cursor + 1
+            rowStart: this.row,
+            colStart: this.col,
+            colEnd: this.col + 1,
+            rowEnd: this.row + 1
         }
     )
 }

@@ -1,4 +1,4 @@
-import { NodeElement, ParserScope, Token, TokenElement } from 'TypeMarkup'
+import { Node, NodeElement, ParserScope, Token, TokenElement } from 'TypeMarkup'
 
 // Analyzers
 import { identifierAnalyzer } from './parser-analyzers/01-identifier.ts'
@@ -15,7 +15,7 @@ import { endOfLineAnalyzer } from './parser-analyzers/08-eol.ts'
 //import { macroAnalyzer } from './parser-analyzers/09-macro.ts'
 import { unknownAnalyzer } from './parser-analyzers/10-unknown.ts'
 
-const analyzers: Record<string, (this: ParserScope) => void> = {
+const analyzers: Record<number, (this: ParserScope) => void> = {
     [Token.Identifier]: identifierAnalyzer,
     [Token.Attribute]: attributeAnalyzer,
 
@@ -38,14 +38,13 @@ function analyzer(this: ParserScope): NodeElement[] {
         this.next()
     }
 
-    return this.values
+    console.log(this.messages)
+
+    return this.result
 }
 
-const parser = (tokens: TokenElement[], file: string): NodeElement[] => {
-    const scope = new ParserScope(tokens, file)
-    scope.analyzers = analyzers
-
-    return analyzer.call(scope)
+const parser = (tokens: TokenElement[]): NodeElement[] => {
+    return analyzer.call(new ParserScope(analyzers, tokens))
 }
 
 export { parser }
