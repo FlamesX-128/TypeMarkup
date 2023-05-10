@@ -143,9 +143,3 @@ export type Attributes<T extends Tag> =
 export interface Position {
     rowStart: number, colStart: number, colEnd: number, rowEnd: number
 }
-
-export interface Message {
-    type: 'error' | 'warning' | 'info'
-    message: string
-    position: Position
-}
