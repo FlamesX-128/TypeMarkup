@@ -1,4 +1,4 @@
-import { lexicalAnalyzer, parserAnalyzer } from 'TypeMarkup'
+import { evaluator, lexicalAnalyzer, parserAnalyzer } from 'TypeMarkup'
 
 const file = await Deno.readTextFile('./test/test.tm')
 
@@ -7,3 +7,6 @@ const r_1 = lexicalAnalyzer('./test/test.tm', file)
 
 const [messages, r_2] = parserAnalyzer('./test/test.tm', r_1)
 console.log(messages, r_2)
+
+const r_3 = evaluator(r_2)
+console.log(r_3)
