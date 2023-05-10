@@ -22,19 +22,6 @@ TypeMarkup is a beautiful and simple language for web documents.
 
     + @[custom]
 
-### **broken functionality**
-
-- Only top level references working
-
-    + ```scss
-        // Pure TypeMarkup
-        * html - lang 'en' html
-
-        & html head
-            - charset 'utf-8'
-            meta
-        ```
-
 ### **Parser linter protoype**
 
 ![TypeMarkup-Linter](https://user-images.githubusercontent.com/78381898/235048516-61f2a43e-b332-4d04-89d0-f24799282877.png)
