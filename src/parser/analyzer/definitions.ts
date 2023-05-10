@@ -1,4 +1,4 @@
-import { Message, MessageElement, Node, NodeElement, Position, Scope, TokenElement } from 'TypeMarkup'
+import { Message, MessageElement, Node, NodeElement, Position, Scope, TokenElement, isSingleton, validTagChild } from 'TypeMarkup'
 
 class ParserScope extends Scope<TokenElement> {
     public readonly analyzers: Record<string, (this: ParserScope) => void> = {}
@@ -26,6 +26,7 @@ class ParserScope extends Scope<TokenElement> {
     public assignChildNode(node: NodeElement, indent: number = this.indent, nodes: NodeElement[] = this.nodes): void {
         if (indent <= 0) { nodes.push(node); return void 1 }
 
+        const nextIndent = indent - 1
         const entry = nodes.at(-1)
 
         if (entry === undefined) {
@@ -37,7 +38,15 @@ class ParserScope extends Scope<TokenElement> {
         }
 
         if (entry.childNodes === null) {
+            if (nextIndent === 0 && isSingleton(entry.data)) {
+                return this.emit(Message.WrongSingletonTagChildren, node.position, entry.data)
+            }
+
             entry.childNodes = []
+        }
+
+        if (nextIndent === 0 && !validTagChild(entry.data, node.data) && node.nodeType === Node.Element) {
+            return this.emit(Message.WrongTagChildren, node.position, entry.data, node.data)
         }
 
         return this.assignChildNode(node, indent - 1, entry.childNodes)
@@ -64,7 +73,6 @@ class ParserScope extends Scope<TokenElement> {
         node.redirect = this.referenceCall
         this.referenceCall = null
     }
-
 }
 
 export { ParserScope }

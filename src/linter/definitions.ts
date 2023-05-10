@@ -2,8 +2,10 @@ import { Position, Token } from 'TypeMarkup'
 
 enum Message {
     WrongTextAttributes,
-
     WrongTagAttributes,
+
+    WrongTagNameDeclaration,
+    WrongTagDeclaration,
     WrongSingletonTagChildren,
     WrongTagChildren,
 
@@ -23,8 +25,11 @@ enum Message {
 
 const messages: Record<Message, string> = {
     [Message.WrongTextAttributes]: 'The text nodes cannot have attributes.',
-
     [Message.WrongTagAttributes]: 'The tag "%s" cannot have attribute "%s".',
+
+    [Message.WrongTagNameDeclaration]: 'The tag %s is recommended to be written in lowercase.".',
+    [Message.WrongTagDeclaration]: 'The tag {} was not found. Did you intend to use {} instead?.',
+
     [Message.WrongSingletonTagChildren]: 'The singleton tag "%s" cannot have children.',
     [Message.WrongTagChildren]: 'The tag "%s" cannot have child "%s".',
 

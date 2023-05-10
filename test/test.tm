@@ -3,4 +3,9 @@
 & html head
 	* title title
 	
-			& title 'test'
+	& title 'test'
+
+	html
+
+	meta
+		div
