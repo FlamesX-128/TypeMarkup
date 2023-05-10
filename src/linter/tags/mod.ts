@@ -1,6 +1,6 @@
 import { AllTags } from './definitions.ts'
 
-const headersIncluded = [
+const text = [
     "a",
     "abbr",
     "acronym",

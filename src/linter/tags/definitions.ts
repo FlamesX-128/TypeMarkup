@@ -116,6 +116,7 @@ type HTML5Tag =
     | 'wbr';
 
 type HTML4Tag =
+    | 'acronym'
     | 'applet'
     | 'basefont'
     | 'center'

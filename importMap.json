@@ -3,6 +3,8 @@
         "std/": "https://deno.land/std@0.184.0/",
         "path": "https://deno.land/std@0.184.0/path/mod.ts",
         "fs": "https://deno.land/std@0.184.0/fs/mod.ts",
+
+        "asserts": "https://deno.land/std@0.184.0/testing/asserts.ts",
         "TypeMarkup": "./mod.ts"
     }
 }
