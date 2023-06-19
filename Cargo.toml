@@ -10,4 +10,5 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-lazy_static = "1.4.0"
+import-modules = "0.1"
+lazy_static = "1.4"
