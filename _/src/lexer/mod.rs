@@ -1,179 +1,63 @@
-pub mod tokenizers;
+mod tokenizers;
 
-use std::str::Chars;
+use tokenizers::TokenInfo;
 
-use crate::DebugInfo;
+use self::tokenizers::Token;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Token {
-    Identifier,
-
-    RightArrow,
-    LeftArrow,
-
-    Minus,
-    Slash,
-    Ampersand,
-    Asterisk,
-    At,
-
-    DoubleQuotes,
-    SingleQuotes,
-    Semicolon,
-
-    NewLine,
-    Space,
-    Tab,
-
-    // - - -
-    Unknown,
-}
-
-impl From<char> for Token {
-    fn from(value: char) -> Self {
-        match value {
-            'a'..='z' | 'A'..='Z' => Self::Identifier,
-
-            '>' => Self::RightArrow,
-            '<' => Self::LeftArrow,
-
-            '-' => Self::Minus,
-            '/' => Self::Slash,
-            '&' => Self::Ampersand,
-            '*' => Self::Asterisk,
-            '@' => Self::At,
-
-            '"' => Self::DoubleQuotes,
-            '\'' => Self::SingleQuotes,
-            ';' => Self::Semicolon,
-
-            '\n' => Self::NewLine,
-            ' ' => Self::Space,
-            '\t' => Self::Tab,
-
-            _ => Self::Unknown,
-        }
-    }
-}
-
-impl From<u8> for Token {
-    fn from(value: u8) -> Self {
-        Self::from(value as char)
-    }
-}
+// - - - Context - - -
 
 #[derive(Clone, Debug)]
-pub struct TokenInfo {
-    pub debug_info: DebugInfo,
-    pub identifier: Token,
-    pub value: String,
-    pub close: bool,
-}
-
-impl TokenInfo {
-    pub fn new(
-        identifier: Token,
-        value: String,
-        close: Option<bool>,
-        debug_info: DebugInfo,
-    ) -> Self {
-        Self {
-            identifier,
-            value,
-            close: close.unwrap_or(true),
-            debug_info,
-        }
-    }
-}
-
-// - - -
-struct Context<'a> {
-    y: usize,
+pub struct Context<'a> {
+    chars: std::str::Chars<'a>,
     x: usize,
-    column: Chars<'a>,
 }
 
-impl<'a> Context<'a> {
-    fn new(y: usize, column: Chars<'a>) -> Self {
-        Self { column, y, x: 0 }
-    }
-}
+impl Iterator for Context<'_> {
+    type Item = char;
 
-impl<'a> Context<'a> {
-    fn next(&mut self) -> Option<char> {
+    fn next(&mut self) -> Option<Self::Item> {
         self.x += 1;
-        self.column.next()
-    }
-
-    fn prev(&mut self) -> Option<char> {
-        self.x -= 1;
-        self.column.nth(self.x)
+        self.chars.next()
     }
 }
 
-// - - -
-
-fn comment(ctx: &mut Context) -> Option<TokenInfo> {
-    let mut value = String::new();
-
-    while let Some(column) = ctx.next() {
-        if column == '\n' {
-            break;
-        }
-
-        value.push(column);
+impl<'a> Context<'a> {
+    fn current(&mut self) -> Option<char> {
+        self.chars.nth(self.x)
     }
-
-    let token = TokenInfo::new(Token::Identifier, value, None, DebugInfo::new(ctx.y, ctx.x));
-
-    return Some(token);
 }
 
-fn identifier(ctx: &mut Context) -> Option<TokenInfo> {
-    let mut value = String::new();
-    ctx.prev();
-
-    while let Some(column) = ctx.next() {
-        if column == ' ' {
-            break;
-        }
-
-        value.push(column);
+impl<'a> Context<'a> {
+    fn new(chars: std::str::Chars<'a>) -> Self {
+        Self { chars, x: 0 }
     }
-
-    let token = TokenInfo::new(Token::Identifier, value, None, DebugInfo::new(ctx.y, ctx.x));
-
-    return Some(token);
 }
 
-// - - -
+// - - - Tokenizer - - -
 
-pub fn anylezer<T>(document: T) -> Vec<TokenInfo>
-where
-    T: AsRef<str>,
-{
+fn tokenizer(ctx: &mut Context) -> Option<TokenInfo> {
+    match ctx.current()? {
+        _ => None,
+    }
+}
+
+// - - - Analyzer - - -
+
+pub fn analyzer(document: &str) -> Vec<TokenInfo> {
     let mut identifiers = Vec::new();
 
-    for (y, row) in document.as_ref().lines().enumerate() {
-        let mut scope = Context::new(y, row.chars());
+    for row in document.lines() {
+        let mut scope = Context::new(row.chars());
 
-        while let Some(column) = scope.next() {
-            if column == ' ' {
-                continue;
-            }
-
-            let result = match column {
-                'a'..='z' | 'A'..='Z' => identifier(&mut scope),
-                '"' => double_quotes(&mut scope),
-                '\'' => single_quotes(&mut scope),
-                '#' => comment(&mut scope),
-                _ => None,
-            };
-
-            if let Some(data) = result {
-                identifiers.push(data);
+        while let Some(_) = scope.next() {
+            if let Some(token) = tokenizer(&mut scope) {
+                identifiers.push(token);
             }
         }
+
+        identifiers.push(
+            TokenInfo::new(Token::NewLine, None) 
+        )
     }
 
     return identifiers;

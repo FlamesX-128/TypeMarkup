@@ -1,10 +1,8 @@
-use crate::DebugInfo;
-
 use std::{error, fmt};
 
-// - - -
+// - - - Error - - -
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Error {
     NoNNestedNode,
 }
@@ -19,85 +17,48 @@ impl fmt::Display for Error {
     }
 }
 
-// - - -
+impl Error {
+    pub fn new(err: Self) -> Result<(), Self> {
+        Err(err)
+    }
+}
 
-#[derive(Clone, Debug)]
+// - - - DOM Types - - -
+
+#[derive(Clone, Debug, Default)]
 pub struct Element {
-    pub debug_info: DebugInfo,
     pub name: String,
 }
 
-impl Element {
-    pub fn new(name: String, debug_info: DebugInfo) -> Self {
-        Self { name, debug_info }
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Attribute {
-    pub debug_info: DebugInfo,
     pub name: String,
     pub value: String,
 }
 
-impl Attribute {
-    pub fn new(name: String, value: String, debug_info: DebugInfo) -> Self {
-        Self {
-            name,
-            value,
-            debug_info,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Text {
-    pub debug_info: DebugInfo,
     pub value: String,
 }
 
-impl Text {
-    pub fn new(value: String, debug_info: DebugInfo) -> Self {
-        Self { value, debug_info }
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct ProcessingInstruction {
-    pub debug_info: DebugInfo,
     pub name: String,
     pub args: Vec<String>,
 }
 
-impl ProcessingInstruction {
-    pub fn new(name: String, args: Vec<String>, debug_info: DebugInfo) -> Self {
-        Self {
-            name,
-            args,
-            debug_info,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Comment {
-    pub debug_info: DebugInfo,
     pub value: String,
 }
 
-impl Comment {
-    pub fn new(value: String, debug_info: DebugInfo) -> Self {
-        Self { value, debug_info }
-    }
-}
-
-// - - -
+// - - - Node - - -
 
 #[derive(Clone, Debug)]
 pub enum Node {
-    NestedNodes(Vec<Node>),      // NODE TYPE A-0
-    RightAlignedNode(Box<Node>), // NODE TYPE A-1
-    LeftAlignedNode(Box<Node>),  // NODE TYPE A-2
+    NestedNodes(Vec<Node>),      // CUSTOM NODE TYPE 0
+    RightAlignedNode(Box<Node>), // CUSTOM NODE TYPE 1
+    LeftAlignedNode(Box<Node>),  // CUSTOM NODE TYPE 2
 
     Element(Element),     // DOM NODE TYPE 1
     Attribute(Attribute), // DOM NODE TYPE 2
@@ -116,18 +77,18 @@ impl Node {
                 } else {
                     match nodes.last_mut() {
                         Some(last) => last.push_at_depth(depth - 1, node),
-                        None => Err(Error::NoNNestedNode),
+                        None => Error::new(Error::NoNNestedNode),
                     }
                 }
             }
-            _ => Err(Error::NoNNestedNode),
+            _ => Error::new(Error::NoNNestedNode),
         }
     }
 
     pub fn push(&mut self, node: Node) -> Result<(), Error> {
         match self {
             Node::NestedNodes(nodes) => Ok(nodes.push(node)),
-            _ => Err(Error::NoNNestedNode),
+            _ => Error::new(Error::NoNNestedNode),
         }
     }
 }
