@@ -1,48 +1,42 @@
-use lazy_static::__Deref;
+pub mod expansion;
+pub mod lexer;
+pub mod parser;
 
-pub mod models;
-pub mod modules;
-//pub mod test;
-
-/*#[no_mangle]
-pub extern "C" fn get_numbers() -> *const u8 {
-        // Crear un vector de números
-        let mut numbers: Vec<u8> = vec![1, 2, 3, 4, 5];
-
-        // Obtener el puntero al arreglo
-        let numbers_ptr = numbers.as_mut_ptr();
-
-        // Evitar que el vector sea liberado al finalizar el ámbito de esta función
-        std::mem::forget(numbers);
-
-        println!("Puntero: {:p}", numbers_ptr);
-
-        // Retornar el puntero al arreglo
-        numbers_ptr
-
+#[derive(Clone, Debug)]
+pub struct DebugInfo {
+    pub column: usize,
+    pub row: usize,
 }
-*/
+
+impl DebugInfo {
+    pub fn new(row: usize, column: usize) -> Self {
+        Self { row, column }
+    }
+}
+
+// - - -
 
 #[cfg(test)]
-mod test {
-    use crate::modules::{lexer, parser};
-
-    fn a() {
-
-    }
+mod tests {
+    use super::lexer;
 
     #[test]
-    fn test() {
-        let file = std::fs::read_to_string("test/test.tm").unwrap();
+    fn it_works() {
+        let expanded = lexer::analyzer("
+* html - lang 'es' html
 
-        let value = lexer::lexer(file.to_string());
+&* html; head
+    | charset 'utf-8'
+    meta
+        
+    | http-equiv 'X-UA-Compatible'
+    | content 'IE=edge'
+    meta
+        
+&* html; body
+    'lorem ipsum dolor sit amet'        
+");
 
-        println!("{:#?}", value);
-
-        let data = parser::parser(value);
-
-        println!("{:#?}", data);
-
-        let b = &a;
+        println!("{:#?}", expanded);
     }
 }
